@@ -1,2 +1,3 @@
 en.subject.pdf
-ayhan_inception
+secrets/*.txt
+.env

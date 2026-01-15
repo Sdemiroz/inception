@@ -1,0 +1,84 @@
+services:
+  mariadb:
+    image: mariadb
+    build:
+      context: ./requirements/mariadb
+    env_file:
+      - .env
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD_FILE: /run/secrets/db_password
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
+    volumes:
+      - wordpress_db:/var/lib/mysql
+    networks:
+      - inception
+    restart: always
+    secrets:
+      - db_root_password
+      - db_password
+
+  wordpress:
+    image: wordpress
+    build:
+      context: ./requirements/wordpress
+    env_file:
+      - .env
+    expose:
+      - "9000"
+    volumes:
+      - wordpress_files:/var/www/html
+    networks:
+      - inception
+    restart: always
+    depends_on:
+      - mariadb
+    secrets:
+      - db_password
+      - wp_admin_password
+      - wp_user_password
+
+  nginx:
+    image: nginx
+    build:
+      context: ./requirements/nginx
+    env_file:
+      - .env
+    ports:
+      - "443:443"
+    volumes:
+      - wordpress_files:/var/www/html
+    networks:
+      - inception
+    restart: always
+    depends_on:
+      - wordpress
+
+networks:
+  inception:
+    driver: bridge
+
+volumes:
+  wordpress_db:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${DATA_PATH}/db
+      o: bind
+  wordpress_files:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${DATA_PATH}/wp
+      o: bind
+
+secrets:
+  db_root_password:
+    file: ../secrets/db_root_password.txt
+  db_password:
+    file: ../secrets/db_password.txt
+  wp_admin_password:
+    file: ../secrets/wp_admin_password.txt
+  wp_user_password:
+    file: ../secrets/wp_user_password.txt
