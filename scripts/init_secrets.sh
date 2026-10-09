@@ -32,4 +32,4 @@ write_if_missing "${secrets_dir}/wp_user_password.txt"
 chmod 600 "${secrets_dir}"/*.txt || true
 
 echo "Secrets are ready in: ${secrets_dir}"
-echo "Edit `srcs/.env` to match your login/domain before running `make up`."
+echo 'Edit srcs/.env to match your login/domain before running make up.'

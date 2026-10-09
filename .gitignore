@@ -1,3 +1,8 @@
-# en.subject.pdf
-# secrets/*.txt
+# Subject
+en.subject.pdf
+
+# Secrets
+/secrets/*.txt
+
+# Environment configuration
 # .env
