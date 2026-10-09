@@ -56,7 +56,7 @@ if [[ ! -f "${data_dir}/.inception_initialized" ]]; then
   db_password_sql="$(sql_escape "${db_password}")"
   root_password_sql="$(sql_escape "${root_password}")"
 
-  mysqld --user=mysql --datadir="${data_dir}" --skip-networking --socket="${socket}" &
+  mysqld --user=mysql --datadir="${data_dir}" --skip-networking --skip-grant-tables --socket="${socket}" &
   temp_pid="$!"
 
   for _ in {1..60}; do
@@ -67,6 +67,7 @@ if [[ ! -f "${data_dir}/.inception_initialized" ]]; then
   done
 
   mariadb --protocol=socket --socket="${socket}" -uroot <<-SQL
+    FLUSH PRIVILEGES;
     ALTER USER 'root'@'localhost' IDENTIFIED BY '${root_password_sql}';
     CREATE DATABASE IF NOT EXISTS \`${MYSQL_DATABASE}\`;
     CREATE USER IF NOT EXISTS '${MYSQL_USER}'@'%' IDENTIFIED BY '${db_password_sql}';
@@ -74,7 +75,10 @@ if [[ ! -f "${data_dir}/.inception_initialized" ]]; then
     FLUSH PRIVILEGES;
 SQL
 
-  mariadb-admin --protocol=socket --socket="${socket}" shutdown
+  MYSQL_PWD="${root_password}" mariadb-admin \
+  --protocol=socket \
+  --socket="${socket}" \
+  -uroot shutdown
   wait "${temp_pid}"
 
   touch "${data_dir}/.inception_initialized"
